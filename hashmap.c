@@ -289,17 +289,19 @@ void ht_put(hashtable_t *ht, void *key, unsigned int key_size,
             void *value, unsigned int value_size)
 {
     int index = ht->hash_function(key) % ht->hmax;
+    // printf("HASH IS: %d \n", index);
     void *copy_key = malloc(key_size);
     memcpy(copy_key, key, key_size);
     ll_node_t *aux = ht->buckets[index]->head;
 
     while (aux)
     {
-        if (!ht->compare_function(key, ((info *)aux->data)->key))
+        if (!ht->compare_function(key, ((info *)aux->data)->key) && compare_function_strings(value, ((info *)aux->data)->value))
         {
             free(((info *)aux->data)->value);
             ((info *)aux->data)->value = malloc(value_size);
-            ((info *)aux->data)->value = value;
+            memcpy(((info *)aux->data)->value, value, value_size);
+            free(copy_key);
             return;
         }
         aux = aux->next;
@@ -310,35 +312,35 @@ void ht_put(hashtable_t *ht, void *key, unsigned int key_size,
 
     memcpy(data->key, copy_key, key_size);
     memcpy(data->value, value, value_size);
+
     ll_add_nth_node(ht->buckets[index], ht->buckets[index]->size, data);
 
     free(copy_key);
     free(data);
 }
 
-void ht_remove_entry(hashtable_t *ht, void *key)
+void *ht_remove_entry(hashtable_t *ht, void *key)
 {
     int index = ht->hash_function(key) % ht->hmax;
     ll_node_t *aux = ht->buckets[index]->head;
     int n = 0;
+    void *res;
     while (aux)
     {
         if (!ht->compare_function(key, ((info *)aux->data)->key))
         {
-            ll_node_t *removed = ll_remove_nth_node(ht->buckets[index], 0);
+            ll_node_t *removed = ll_remove_nth_node(ht->buckets[index], n);
             free(((info *)removed->data)->key);
-            free(((info *)removed->data)->value);
+            res = ((info *)removed->data)->value;
             free(removed->data);
-            aux = aux->next;
             free(removed);
+            break;
         }
-        else
-        {
-            aux = aux->next;
-        }
+        aux = aux->next;
 
         n++;
     }
+    return res;
 }
 
 void ht_free(hashtable_t *ht)

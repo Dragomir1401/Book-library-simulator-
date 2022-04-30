@@ -4,11 +4,11 @@ CC=gcc
 CFLAGS=-Wall -Wextra -std=c99 -g
 
 # define targets
-TARGET=tema2
+TARGET=main
 
 build: $(TARGET)
 
-tema2: hashmap.o main.o parse_input.o functions.o
+main: hashmap.o main.o parse_input.o functions.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 %.o: %.c

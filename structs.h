@@ -23,21 +23,20 @@ typedef struct linked_list_t
 typedef struct hashtable_t hashtable_t;
 struct hashtable_t
 {
-    linked_list_t **buckets; /* Array de liste simplu-inlantuite. */
-    /* Nr. total de noduri existente curent in toate bucket-urile. */
+    linked_list_t **buckets;
     unsigned int size;
-    unsigned int hmax; /* Nr. de bucket-uri. */
-    /* (Pointer la) Functie pentru a calcula valoarea hash asociata cheilor. */
+    unsigned int hmax;
     unsigned int (*hash_function)(void *);
-    /* (Pointer la) Functie pentru a compara doua chei. */
     int (*compare_function)(void *, void *);
 };
 
 typedef struct details details;
 struct details
 {
-    int rating;
-    int pieces_sold;
+    float rating;
+    int borrowed;
+    int nr_of_borrows;
+    int days_available;
 };
 
 typedef struct tome tome;
@@ -45,4 +44,12 @@ struct tome
 {
     hashtable_t *book;
     details *details;
+};
+
+typedef struct person person;
+struct person
+{
+    int borrowed_already;
+    int score;
+    char *book_borrowed;
 };
