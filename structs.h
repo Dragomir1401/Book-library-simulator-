@@ -33,7 +33,7 @@ struct hashtable_t
 typedef struct details details;
 struct details
 {
-    float rating;
+    double rating;
     int borrowed;
     int nr_of_borrows;
     int days_available;

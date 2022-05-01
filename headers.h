@@ -25,7 +25,9 @@ void parse_add_book_input(char *token, hashtable_t *library);
 
 void parse_get_book_input(char *token, hashtable_t *library);
 
-void free_resources(hashtable_t *library, hashtable_t *system);
+void free_library(hashtable_t *library);
+
+void free_system(hashtable_t *system);
 
 void parse_rmv_book_input(char *token, hashtable_t *library);
 
@@ -50,3 +52,9 @@ void top_users(hashtable_t *system);
 void ll_free(linked_list_t **pp_list);
 
 void free_volume(tome *volume);
+
+linked_list_t *ll_create(unsigned int data_size);
+
+hashtable_t *ht_create_resize(hashtable_t *ht, int data_size);
+
+void ht_resize(hashtable_t *ht, int data_size);
