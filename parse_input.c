@@ -40,8 +40,8 @@ void parse_add_book_input(char *token, hashtable_t *library)
         strcpy(word, tmp);
         tmp = strtok(NULL, " \n");
         strcpy(def, tmp);
-
         ht_put(volume->book, word, strlen(word) + 1, def, strlen(def) + 1);
+
         volume->book->size++;
     }
 
@@ -57,6 +57,48 @@ void parse_add_book_input(char *token, hashtable_t *library)
         free(word);
         free(def);
         return;
+    }
+    // If we have the book already we just reset values and add new words
+
+    tome *old_book = *(tome **)ht_get(library, book_name);
+    old_book->details->rating = 0;
+    old_book->details->borrowed = 0;
+    old_book->details->nr_of_borrows = 0;
+    old_book->details->days_available = 0;
+
+    for (unsigned int i = 0; i < old_book->book->hmax; i++)
+    {
+        if (old_book->book->buckets[i]->size > 0)
+        {
+            ll_node_t *aux = old_book->book->buckets[i]->head;
+            while (aux != NULL)
+            {
+                void *key = ((info *)aux->data)->key;
+                aux = aux->next;
+                if (ht_has_key(old_book->book, key) && !ht_has_key(volume->book, key))
+                {
+                    void *res = ht_remove_entry(old_book->book, key);
+                    free(res);
+                    old_book->book->size--;
+                }
+            }
+        }
+    }
+
+    for (unsigned int i = 0; i < volume->book->hmax; i++)
+    {
+        if (volume->book->buckets[i]->size > 0)
+        {
+            ll_node_t *aux = volume->book->buckets[i]->head;
+            while (aux)
+            {
+                void *value = ((info *)aux->data)->value;
+                void *key = ((info *)aux->data)->key;
+                ht_put(old_book->book, key, strlen(key) + 1, value, strlen(value) + 1);
+                old_book->book->size++;
+                aux = aux->next;
+            }
+        }
     }
 
     ht_free(volume->book);
@@ -81,9 +123,7 @@ void parse_get_book_input(char *token, hashtable_t *library)
     if (ht_has_key(library, book_name))
     {
         tome *volume = *(tome **)ht_get(library, book_name);
-        // printf("--%s--\n", *(char **)library->buckets[library->hash_function(book_name) % library->hmax]->head->data);
         printf("Name:%s Rating:%.3f Purchases:%d\n", book_name, volume->details->rating, volume->details->nr_of_borrows);
-        // printf("%d\n", ht_has_key(volume->book, "cal"));
     }
     else
         printf(NOT_IN_LIBRARY);
@@ -170,8 +210,6 @@ void parse_get_def_input(char *token, hashtable_t *library)
     char *word = malloc(MAX_WORD);
     memmove(word, token, strlen(token) + 1);
 
-    // printf("%s %s %s\n", book_name, word, def);
-
     if (ht_has_key(library, book_name))
     {
         tome *volume = *(tome **)ht_get(library, book_name);
@@ -203,7 +241,6 @@ void parse_rmv_def_input(char *token, hashtable_t *library)
     token = strtok(NULL, " \n");
     char *word = malloc(MAX_WORD);
     memmove(word, token, strlen(token) + 1);
-    // printf("%s %s %s\n", book_name, word, def);
 
     if (ht_has_key(library, book_name))
     {
@@ -213,7 +250,6 @@ void parse_rmv_def_input(char *token, hashtable_t *library)
             void *res = ht_remove_entry(volume->book, word);
             free(res);
             volume->book->size--;
-            // printf("%d\n", ht_has_key(volume->book, word));
         }
         else
             printf(NOT_IN_BOOK);
@@ -274,16 +310,8 @@ void parse_borrow_input(char *token, hashtable_t *library, hashtable_t *system)
     token = strtok(NULL, " \n");
     int days_available = atoi(token);
 
-    //printf("%s %s %d\n", user_name, book_name, days_available);
-
     if (!ht_has_key(system, user_name))
     {
-        FILE *output = fopen("debug", "a+");
-        if (!strncmp(user_name, "Hogan", 5))
-        {
-            fprintf(output, "am iesit BA HANDICAP\n");
-        }
-        fclose(output);
         printf(NOT_REGISTERED);
         free(user_name);
         free(book_name);
@@ -299,21 +327,9 @@ void parse_borrow_input(char *token, hashtable_t *library, hashtable_t *system)
         free(book_name);
         return;
     }
-    FILE *output = fopen("debug", "a+");
-    if (!strncmp(user_name, "Hogan", 5))
-    {
-        fprintf(output, "borrowed_already este:%d\n", user->borrowed_already);
-    }
-    fclose(output);
 
     if (user->borrowed_already)
     {
-        FILE *output = fopen("debug", "a+");
-        if (!strncmp(user_name, "Hogan", 5))
-        {
-            fprintf(output, "borrowed_already este IN IF BA BOULE:%d\n", user->borrowed_already);
-        }
-        fclose(output);
         printf(ALREADY_BORROWED);
     }
     else if (ht_has_key(library, book_name))
@@ -321,12 +337,6 @@ void parse_borrow_input(char *token, hashtable_t *library, hashtable_t *system)
         tome *volume = *(tome **)ht_get(library, book_name);
         if (volume->details->borrowed)
         {
-            FILE *output = fopen("debug", "a+");
-            if (!strncmp(user_name, "Hogan", 5))
-            {
-                fprintf(output, "borrowed_already este IN IF BA BOULE:%d\n", user->borrowed_already);
-            }
-            fclose(output);
             printf(BORROWED);
         }
         else
@@ -335,23 +345,11 @@ void parse_borrow_input(char *token, hashtable_t *library, hashtable_t *system)
             volume->details->days_available = days_available;
             user->borrowed_already = 1;
             strcpy(user->book_borrowed, book_name);
-            FILE *output = fopen("debug", "a+");
-            if (!strncmp(user_name, "Hogan", 5))
-            {
-                fprintf(output, "%s\n%s\n", user->book_borrowed, book_name);
-            }
-            fclose(output);
         }
     }
     else
     {
         printf(NOT_IN_LIBRARY);
-        FILE *output = fopen("debug", "a+");
-        if (!strcmp(user_name, "Hogan"))
-        {
-            fprintf(output, "%s\n%s\n", user->book_borrowed, book_name);
-        }
-        fclose(output);
     }
 
     free(user_name);
@@ -379,8 +377,6 @@ void parse_return_input(char *token, hashtable_t *library, hashtable_t *system)
     token = strtok(NULL, " \n");
     int rating = atoi(token);
 
-    //printf("%s %s %d %d \n", user_name, book_name, days_since_borrowed, rating);
-
     person *user = *(person **)ht_get(system, user_name);
     tome *volume = *(tome **)ht_get(library, book_name);
 
@@ -392,14 +388,6 @@ void parse_return_input(char *token, hashtable_t *library, hashtable_t *system)
         return;
     }
 
-    FILE *output = fopen("debug", "a+");
-    if (!strcmp(user_name, "Hogan"))
-    {
-        fprintf(output, "%d %d\n", days_since_borrowed, volume->details->days_available);
-        fprintf(output, "%s\n%s\n", user->book_borrowed, book_name);
-    }
-    fclose(output);
-
     if (strncmp(user->book_borrowed, book_name, strlen(book_name)) > 0 || strncmp(user->book_borrowed, book_name, strlen(book_name)) < 0)
     {
         printf(OTHER_BOOK);
@@ -407,11 +395,6 @@ void parse_return_input(char *token, hashtable_t *library, hashtable_t *system)
         free(book_name);
         return;
     }
-
-    output = fopen("debug", "a+");
-    if (!strcmp(user_name, "Hogan"))
-        fprintf(output, "%d %d\n", days_since_borrowed, volume->details->days_available);
-    fclose(output);
 
     if (!ht_has_key(library, book_name))
     {
@@ -429,27 +412,14 @@ void parse_return_input(char *token, hashtable_t *library, hashtable_t *system)
     if (user->score < 0)
         printf(BAN_MESSAGE, user_name);
 
-    output = fopen("debug", "a+");
-    if (!strcmp(user_name, "Hogan"))
-        fprintf(output, "%d\n", user->score);
-    fclose(output);
-
     // Return action
     volume->details->nr_of_borrows++;
     user->borrowed_already = 0;
-    strcpy(user->book_borrowed, "niciodata\0");
+    strcpy(user->book_borrowed, "never_here\0");
 
     volume->details->borrowed = 0;
     volume->details->days_available = 0;
     volume->details->rating = (volume->details->rating * (volume->details->nr_of_borrows - 1) + rating) / (double)volume->details->nr_of_borrows;
-
-    output = fopen("debug", "a+");
-    if (!strncmp(user_name, "Hogan", 5))
-    {
-        fprintf(output, "Volumul %s este imprumutat: %d\n", book_name, volume->details->borrowed);
-    }
-    fclose(output);
-    // printf("BOOK: %s  RATING: %f\n", book_name, volume->details->rating);
 
     free(user_name);
     free(book_name);
@@ -470,7 +440,6 @@ void parse_lost_input(char *token, hashtable_t *library, hashtable_t *system)
     char *book_name = malloc(MAX_BOOK_NAME);
     strcpy(book_name, token);
 
-    //printf("%s %s %d %d \n", user_name, book_name, days_since_borrowed, rating);
     person *user;
     if (ht_has_key(system, user_name))
         user = *(person **)ht_get(system, user_name);

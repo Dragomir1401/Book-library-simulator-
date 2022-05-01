@@ -37,21 +37,9 @@ int main(void)
         else if (!strncmp(token, "ADD_USER", 8))
             parse_add_user_input(token, system);
         else if (!strncmp(token, "BORROW", 6))
-        {
-            FILE *output = fopen("debug", "a+");
-            if (strstr(buff1, "Hogan"))
-                fprintf(output, "%s\n", buff1);
-            fclose(output);
             parse_borrow_input(token, library, system);
-        }
         else if (!strncmp(token, "RETURN", 6))
-        {
-            FILE *output = fopen("debug", "a+");
-            if (strstr(buff1, "Hogan"))
-                fprintf(output, "%s\n", buff1);
-            fclose(output);
             parse_return_input(token, library, system);
-        }
         else if (!strncmp(token, "LOST", 4))
             parse_lost_input(token, library, system);
         else if (!strncmp(token, "EXIT", 4))

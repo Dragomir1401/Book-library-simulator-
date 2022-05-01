@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #define MAX_BOOK_NAME 100
 #define MAX_USER_NAME 100
 #define BUFFER_MAX 300
@@ -75,13 +76,16 @@ void swap(char **a1, char **b1, double *a2, double *b2, int *a3, int *b3)
 
 void sort_by_rating(char **names, double *rating, int *purchases, int size)
 {
+    double eps = 0.001;
     for (int i = 0; i < size - 1; i++)
         for (int j = i + 1; j < size; j++)
             if (rating[i] < rating[j])
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
-            else if (rating[i] == rating[j] && purchases[i] < purchases[j])
+            else if (fabs(rating[i] - rating[j]) < eps && purchases[i] < purchases[j])
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
-            else if (rating[i] == rating[j] && purchases[i] == purchases[j] && strcmp(names[j], names[i]) < 0)
+    for (int i = 0; i < size - 1; i++)
+        for (int j = i + 1; j < size; j++)
+            if (fabs(rating[i] - rating[j]) < eps && purchases[i] == purchases[j] && strcmp(names[j], names[i]) < 0)
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
 }
 
