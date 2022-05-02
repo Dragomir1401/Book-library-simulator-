@@ -312,7 +312,6 @@ void ht_put(hashtable_t *ht, void *key, unsigned int key_size,
 
     memcpy(data->key, copy_key, key_size);
     memcpy(data->value, value, value_size);
-
     ll_add_nth_node(ht->buckets[index], ht->buckets[index]->size, data);
 
     free(copy_key);

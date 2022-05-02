@@ -81,8 +81,12 @@ void sort_by_rating(char **names, double *rating, int *purchases, int size)
         for (int j = i + 1; j < size; j++)
             if (rating[i] < rating[j])
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
-            else if (fabs(rating[i] - rating[j]) < eps && purchases[i] < purchases[j])
+
+    for (int i = 0; i < size - 1; i++)
+        for (int j = i + 1; j < size; j++)
+            if (fabs(rating[i] - rating[j]) < eps && purchases[i] < purchases[j])
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
+
     for (int i = 0; i < size - 1; i++)
         for (int j = i + 1; j < size; j++)
             if (fabs(rating[i] - rating[j]) < eps && purchases[i] == purchases[j] && strcmp(names[j], names[i]) < 0)
@@ -107,8 +111,11 @@ void top_books(hashtable_t *library)
             {
                 tome *volume = *(tome **)((info *)aux->data)->value;
                 strcpy(names[cnt], (char *)((info *)aux->data)->key);
-                rates[cnt] = volume->details->rating;
                 purchases[cnt] = volume->details->nr_of_borrows;
+                if (volume->details->nr_of_borrows != 0)
+                    rates[cnt] = volume->details->rating / volume->details->nr_of_borrows;
+                else
+                    rates[cnt] = 0;
                 cnt++;
                 aux = aux->next;
             }
@@ -201,7 +208,7 @@ void free_volume(tome *volume)
     free(volume);
 }
 
-hashtable_t *ht_create_resize(hashtable_t *ht, int data_size)
+hashtable_t *ht_create_resize(hashtable_t *ht, int data_size, int word)
 {
     hashtable_t *new_ht = ht_create(2 * ht->hmax, hash_function_string, compare_function_strings);
 
@@ -214,8 +221,8 @@ hashtable_t *ht_create_resize(hashtable_t *ht, int data_size)
             {
                 void *value = ((info *)aux->data)->value;
                 char *key = ((info *)aux->data)->key;
-                if (data_size == MAX_WORD)
-                    ht_put(new_ht, key, strlen(key) + 1, value, strlen(value) + 1);
+                if (word == 1)
+                    ht_put(new_ht, key, strlen(key) + 1, value, strlen((char *)value) + 1);
                 else
                     ht_put(new_ht, key, strlen(key) + 1, value, data_size);
                 new_ht->size++;
@@ -226,9 +233,9 @@ hashtable_t *ht_create_resize(hashtable_t *ht, int data_size)
     return new_ht;
 }
 
-void ht_resize(hashtable_t *ht, int data_size)
+void ht_resize(hashtable_t *ht, int data_size, int word)
 {
-    hashtable_t *new_ht = ht_create_resize(ht, data_size);
+    hashtable_t *new_ht = ht_create_resize(ht, data_size, word);
 
     for (unsigned int i = 0; i < ht->hmax; i++)
     {

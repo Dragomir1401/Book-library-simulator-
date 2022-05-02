@@ -50,8 +50,8 @@ void parse_add_book_input(char *token, hashtable_t *library)
         ht_put(library, book_name, strlen(book_name) + 1, &volume, sizeof(tome));
         library->size++;
 
-        if (library->size / library->hmax > 1)
-            ht_resize(library, sizeof(tome));
+        if ((double)library->size / library->hmax >= 1)
+            ht_resize(library, sizeof(tome), 0);
         free(buff);
         free(book_name);
         free(word);
@@ -118,12 +118,17 @@ void parse_get_book_input(char *token, hashtable_t *library)
 
     token = strtok(NULL, separators);
     char *book_name = malloc(MAX_BOOK_NAME);
-    memmove(book_name, token, strlen(token) + 1);
+    memcpy(book_name, token, strlen(token) + 1);
 
     if (ht_has_key(library, book_name))
     {
         tome *volume = *(tome **)ht_get(library, book_name);
-        printf("Name:%s Rating:%.3f Purchases:%d\n", book_name, volume->details->rating, volume->details->nr_of_borrows);
+        double rat;
+        if (!volume->details->nr_of_borrows)
+            rat = 0;
+        else
+            rat = volume->details->rating / volume->details->nr_of_borrows;
+        printf("Name:%s Rating:%.3f Purchases:%d\n", book_name, rat, volume->details->nr_of_borrows);
     }
     else
         printf(NOT_IN_LIBRARY);
@@ -139,7 +144,7 @@ void parse_rmv_book_input(char *token, hashtable_t *library)
 
     token = strtok(NULL, separators);
     char *book_name = malloc(MAX_BOOK_NAME);
-    memmove(book_name, token, strlen(token) + 1);
+    memcpy(book_name, token, strlen(token) + 1);
 
     if (ht_has_key(library, book_name))
     {
@@ -163,15 +168,15 @@ void parse_add_def_input(char *token, hashtable_t *library)
 
     token = strtok(NULL, separators);
     char *book_name = malloc(MAX_BOOK_NAME);
-    memmove(book_name, token, strlen(token) + 1);
+    memcpy(book_name, token, strlen(token) + 1);
 
     token = strtok(NULL, " \n");
     char *word = malloc(MAX_WORD);
-    memmove(word, token, strlen(token) + 1);
+    memcpy(word, token, strlen(token) + 1);
 
     token = strtok(NULL, " \n");
     char *def = malloc(MAX_WORD);
-    memmove(def, token, strlen(token) + 1);
+    memcpy(def, token, strlen(token) + 1);
 
     if (ht_has_key(library, book_name))
     {
@@ -186,8 +191,8 @@ void parse_add_def_input(char *token, hashtable_t *library)
             ht_put(volume->book, word, strlen(word) + 1, def, strlen(def) + 1);
         }
 
-        if (volume->book->size / volume->book->hmax > 1)
-            ht_resize(volume->book, MAX_WORD);
+        if ((double)volume->book->size / volume->book->hmax >= 1)
+            ht_resize(volume->book, MAX_WORD, 1);
     }
     else
         printf(NOT_IN_LIBRARY);
@@ -204,11 +209,11 @@ void parse_get_def_input(char *token, hashtable_t *library)
 
     token = strtok(NULL, separators);
     char *book_name = malloc(MAX_BOOK_NAME);
-    memmove(book_name, token, strlen(token) + 1);
+    memcpy(book_name, token, strlen(token) + 1);
 
     token = strtok(NULL, " \n");
     char *word = malloc(MAX_WORD);
-    memmove(word, token, strlen(token) + 1);
+    memcpy(word, token, strlen(token) + 1);
 
     if (ht_has_key(library, book_name))
     {
@@ -236,11 +241,11 @@ void parse_rmv_def_input(char *token, hashtable_t *library)
 
     token = strtok(NULL, separators);
     char *book_name = malloc(MAX_BOOK_NAME);
-    memmove(book_name, token, strlen(token) + 1);
+    memcpy(book_name, token, strlen(token) + 1);
 
     token = strtok(NULL, " \n");
     char *word = malloc(MAX_WORD);
-    memmove(word, token, strlen(token) + 1);
+    memcpy(word, token, strlen(token) + 1);
 
     if (ht_has_key(library, book_name))
     {
@@ -281,8 +286,8 @@ void parse_add_user_input(char *token, hashtable_t *system)
         ht_put(system, user_name, strlen(user_name) + 1, &user, sizeof(person));
         system->size++;
 
-        if (system->size / system->hmax > 1)
-            ht_resize(system, sizeof(person));
+        if ((double)system->size / system->hmax >= 1)
+            ht_resize(system, sizeof(person), 0);
     }
     else
     {
@@ -419,7 +424,7 @@ void parse_return_input(char *token, hashtable_t *library, hashtable_t *system)
 
     volume->details->borrowed = 0;
     volume->details->days_available = 0;
-    volume->details->rating = (volume->details->rating * (volume->details->nr_of_borrows - 1) + rating) / (double)volume->details->nr_of_borrows;
+    volume->details->rating += rating;
 
     free(user_name);
     free(book_name);
