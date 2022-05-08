@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "structs.h"
+#include <stdint.h>
 #define MAX_STRING_SIZE 256
 #define HMAX 10
+#define MAX_WORD 100
 
 linked_list_t *
 ll_create(unsigned int data_size)
@@ -210,8 +212,8 @@ unsigned int
 hash_function_int(void *a)
 {
     /*
-	 * Credits: https://stackoverflow.com/a/12996028/7883884
-	 */
+     * Credits: https://stackoverflow.com/a/12996028/7883884
+     */
     unsigned int uint_a = *((unsigned int *)a);
 
     uint_a = ((uint_a >> 16u) ^ uint_a) * 0x45d9f3b;
@@ -224,8 +226,8 @@ unsigned int
 hash_function_string(void *a)
 {
     /*
-	 * Credits: http://www.cse.yorku.ca/~oz/hash.html
-	 */
+     * Credits: http://www.cse.yorku.ca/~oz/hash.html
+     */
     unsigned char *puchar_a = (unsigned char *)a;
     unsigned long hash = 5381;
     int c;
@@ -254,16 +256,13 @@ ht_create(unsigned int hmax, unsigned int (*hash_function)(void *),
 
 int ht_has_key(hashtable_t *ht, void *key)
 {
-    for (unsigned int i = 0; i < ht->hmax; i++)
+    int index = ht->hash_function(key) % ht->hmax;
+    ll_node_t *aux = ht->buckets[index]->head;
+    while (aux)
     {
-        int index = ht->hash_function(key) % ht->hmax;
-        ll_node_t *aux = ht->buckets[index]->head;
-        while (aux)
-        {
-            if (!ht->compare_function(key, ((info *)aux->data)->key))
-                return 1;
-            aux = aux->next;
-        }
+        if (!ht->compare_function(key, ((info *)aux->data)->key))
+            return 1;
+        aux = aux->next;
     }
 
     return 0;
@@ -285,11 +284,75 @@ ht_get(hashtable_t *ht, void *key)
     return NULL;
 }
 
+void ht_rehash(hashtable_t *hashtable, info *elem)
+{
+    if (!hashtable)
+        return;
+
+    unsigned int hash = hashtable->hash_function(elem->key) % hashtable->hmax;
+    linked_list_t *list = hashtable->buckets[hash];
+
+    ll_add_nth_node(list, 0, elem);
+}
+
+linked_list_t *ht_create_list_from_ht(hashtable_t *hashtable)
+{
+    linked_list_t *list = ll_create(hashtable->buckets[0]->data_size);
+    unsigned int cnt = 0;
+    while (cnt < hashtable->hmax)
+    {
+        if (hashtable->buckets[cnt])
+        {
+            if (!list->head)
+            {
+                list->head = hashtable->buckets[cnt]->head;
+                list->size += hashtable->buckets[cnt]->size;
+                free(hashtable->buckets[cnt]);
+            }
+            else
+            {
+                ll_node_t *last_curr = list->head;
+                while (last_curr->next)
+                    last_curr = last_curr->next;
+
+                last_curr->next = hashtable->buckets[cnt]->head;
+                list->size += hashtable->buckets[cnt]->size;
+                free(hashtable->buckets[cnt]);
+            }
+        }
+        cnt++;
+    }
+
+    return list;
+}
+
+void ht_resize(hashtable_t *hashtable)
+{
+    linked_list_t *entries = ht_create_list_from_ht(hashtable);
+    hashtable->hmax = hashtable->hmax * 2;
+    hashtable->buckets = realloc(hashtable->buckets, hashtable->hmax * sizeof(linked_list_t *));
+
+    for (uint32_t i = 0; i < hashtable->hmax; i++)
+        hashtable->buckets[i] = ll_create(sizeof(info));
+
+    ll_node_t *curr = entries->head;
+    while (curr)
+    {
+        ht_rehash(hashtable, curr->data);
+        curr = curr->next;
+    }
+
+    ll_free(&entries);
+}
+
 void ht_put(hashtable_t *ht, void *key, unsigned int key_size,
             void *value, unsigned int value_size)
 {
+    double load_factor = ht->size / ht->hmax;
+    if (load_factor > 1)
+        ht_resize(ht);
+
     int index = ht->hash_function(key) % ht->hmax;
-    // printf("HASH IS: %d \n", index);
     void *copy_key = malloc(key_size);
     memcpy(copy_key, key, key_size);
     ll_node_t *aux = ht->buckets[index]->head;

@@ -57,4 +57,4 @@ linked_list_t *ll_create(unsigned int data_size);
 
 hashtable_t *ht_create_resize(hashtable_t *ht, int data_size, int word);
 
-void ht_resize(hashtable_t *ht, int data_size, int word);
+void ht_resize(hashtable_t *ht);

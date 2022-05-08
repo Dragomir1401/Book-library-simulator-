@@ -57,6 +57,18 @@ void free_system(hashtable_t *system)
     free(system);
 }
 
+int compare(char *name1, char *name2, double rating1, double rating2, int purchase1, int purchase2)
+{
+    double eps = 0.001;
+    if (rating1 < rating2)
+        return 1;
+    else if (fabs(rating1 - rating2) < eps && purchase1 < purchase2)
+        return 1;
+    else if (fabs(rating1 - rating2) < eps && purchase1 == purchase2 && strcmp(name1, name2) < 0)
+        return 1;
+    return 0;
+}
+
 void swap(char **a1, char **b1, double *a2, double *b2, int *a3, int *b3)
 {
     char *aux = malloc(MAX_BOOK_NAME);
@@ -81,15 +93,9 @@ void sort_by_rating(char **names, double *rating, int *purchases, int size)
         for (int j = i + 1; j < size; j++)
             if (rating[i] < rating[j])
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
-
-    for (int i = 0; i < size - 1; i++)
-        for (int j = i + 1; j < size; j++)
-            if (fabs(rating[i] - rating[j]) < eps && purchases[i] < purchases[j])
+            else if (fabs(rating[i] - rating[j]) < eps && purchases[i] < purchases[j])
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
-
-    for (int i = 0; i < size - 1; i++)
-        for (int j = i + 1; j < size; j++)
-            if (fabs(rating[i] - rating[j]) < eps && purchases[i] == purchases[j] && strcmp(names[j], names[i]) < 0)
+            else if (fabs(rating[i] - rating[j]) < eps && purchases[i] == purchases[j] && strcmp(names[j], names[i]) < 0)
                 swap(&names[i], &names[j], &rating[i], &rating[j], &purchases[i], &purchases[j]);
 }
 
@@ -125,10 +131,11 @@ void top_books(hashtable_t *library)
     sort_by_rating(names, rates, purchases, library->size);
     printf("Books ranking:\n");
     for (unsigned int i = 0; i < library->size; i++)
+    {
         printf("%d. Name:%s Rating:%.3f Purchases:%d\n", i + 1, names[i], rates[i], purchases[i]);
-
-    for (unsigned int i = 0; i < library->size; i++)
         free(names[i]);
+    }
+
     free(names);
     free(rates);
     free(purchases);
@@ -176,11 +183,14 @@ void top_users(hashtable_t *system)
     sort_by_scores(names, scores, system->size);
     printf("Users ranking:\n");
     for (unsigned int i = 0; i < system->size; i++)
+    {
+
         if (scores[i] >= 0)
             printf("%d. Name:%s Points:%d\n", i + 1, names[i], scores[i]);
 
-    for (unsigned int i = 0; i < system->size; i++)
         free(names[i]);
+    }
+
     free(names);
     free(scores);
 }
@@ -206,51 +216,4 @@ void free_volume(tome *volume)
     free(volume->book);
     free(volume->details);
     free(volume);
-}
-
-hashtable_t *ht_create_resize(hashtable_t *ht, int data_size, int word)
-{
-    hashtable_t *new_ht = ht_create(2 * ht->hmax, hash_function_string, compare_function_strings);
-
-    for (unsigned int i = 0; i < ht->hmax; i++)
-    {
-        if (ht->buckets[i]->size > 0)
-        {
-            ll_node_t *aux = ht->buckets[i]->head;
-            while (aux)
-            {
-                void *value = ((info *)aux->data)->value;
-                char *key = ((info *)aux->data)->key;
-                if (word == 1)
-                    ht_put(new_ht, key, strlen(key) + 1, value, strlen((char *)value) + 1);
-                else
-                    ht_put(new_ht, key, strlen(key) + 1, value, data_size);
-                new_ht->size++;
-                aux = aux->next;
-            }
-        }
-    }
-    return new_ht;
-}
-
-void ht_resize(hashtable_t *ht, int data_size, int word)
-{
-    hashtable_t *new_ht = ht_create_resize(ht, data_size, word);
-
-    for (unsigned int i = 0; i < ht->hmax; i++)
-    {
-        ll_node_t *aux = ht->buckets[i]->head;
-        while (aux)
-        {
-            free(((info *)aux->data)->key);
-            free(((info *)aux->data)->value);
-            aux = aux->next;
-        }
-        ll_free(&ht->buckets[i]);
-    }
-    free(ht->buckets);
-
-    ht->buckets = new_ht->buckets;
-    ht->hmax = new_ht->hmax;
-    free(new_ht);
 }

@@ -5,23 +5,28 @@
 #include "structs.h"
 #include "headers.h"
 #define BUFFER_MAX 300
-#define MAX_HASHTABLE 7
+#define MAX_HASHTABLE 10
 int main(void)
 {
+    // Alloc buffers for manipulating input
     char *buff = malloc(BUFFER_MAX);
     char *buff1 = malloc(BUFFER_MAX);
-
+    // Create hashtables for users and library
     hashtable_t *library = ht_create(MAX_HASHTABLE, hash_function_string, compare_function_strings);
     hashtable_t *system = ht_create(MAX_HASHTABLE, hash_function_string, compare_function_strings);
+    // Initialise a string of separators for strtok
     char separators[3];
     separators[0] = ' ';
     separators[1] = '\"';
     separators[2] = '\n';
+    // Main command iteration
     while (1)
     {
         fgets(buff, BUFFER_MAX, stdin);
         strcpy(buff1, buff);
+        // Separate input in words
         char *token = strtok(buff, separators);
+        // Choose command
         if (!strncmp(token, "ADD_BOOK", 8))
             parse_add_book_input(token, library);
         else if (!strncmp(token, "GET_BOOK", 8))
@@ -44,6 +49,7 @@ int main(void)
             parse_lost_input(token, library, system);
         else if (!strncmp(token, "EXIT", 4))
         {
+            // Call statistics functions and free resources
             top_books(library);
             top_users(system);
             free_library(library);
@@ -53,6 +59,7 @@ int main(void)
         else
             printf(INVALID_COMMAND);
     }
+    // Free buffers
     free(buff);
     free(buff1);
     return 0;
