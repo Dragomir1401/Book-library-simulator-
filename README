@@ -1,0 +1,77 @@
+______________________________
+|                            |
+|   Copyright                |
+|      Dragomir Andrei 2022  |
+|                            |
+|____________________________|
+
+---------------------------------------------------------------------
+Nume: Dragomir Andrei
+Grupă: 312CA
+
+Tema 2 - The Library of HashBabel
+
+----------------------------------------------------------------------------
+
+____________Description___________
+
+    This project is based on hashtables functionalities in C.
+We use a generic implementation to store each part of the implementation.
+This library has capacity to store books of hashmap type and logs about users.
+In the end we create a top of books based on the rating received and of users
+based on the score acumulated.
+
+    We use multiple ".c" files. The main one calls function which parses input
+based on the command received from input. We use another function source besides
+the hashmap basic functions for creating the last tops and freeing all the
+resources in this project.
+
+    This project works by creating a hashtable of books(library) and a hashtable
+of users(system). In the hashtable of books each entry is a structure which 
+holds a book(hashtable type) and details of the book. Commands supported:
+
+- add book
+- rmv book
+- get book
+- add def
+- rmv def
+- get def
+- add user
+- borrow book
+- return book
+- lost book 
+
+    This project uses a system of points for users and a system of rating
+for the books. It also uses a system of errors for certain unsupported
+situtaions.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+
+_____________Comments_____________
+
+    The implementation could have been done better based on the genericity of
+the code. Besides this I could have made a more modularized approach. The
+structure follows parse_input functions, hashmap functions and other functions.
+    I learned from this project how to use hashtables and how hashing works
+I also learned how to manage errors and memory leaks and the fact that some
+errors can spread and cause other problems of ouput or memory.
+
+------------------------------------------------------------------------------
+
+_____________How_to_run_it__________
+
+    make && ./main
+
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+
+Resources:
+
+https://ocw.cs.pub.ro/courses/sd-ca/teme/tema2-2022
+http://www.cse.yorku.ca/~oz/hash.html
+https://ocw.cs.pub.ro/courses/sd-ca/laboratoare/lab-04
+
+-----------------------------------------------------------------------------
